@@ -2,9 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Octokit } from "@octokit/rest";
 import { prisma } from "./prisma";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+// Lazy-initialize to avoid instantiation during Next.js build phase
+function getAnthropicClient() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+}
 
 interface RepoFile {
   path: string;
@@ -303,7 +304,7 @@ Respond ONLY with a valid JSON object matching this exact structure:
 
 Be thorough, honest, and business-focused. Frame technical issues in terms of business risk and cost.`;
 
-  const response = await anthropic.messages.create({
+  const response = await getAnthropicClient().messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
