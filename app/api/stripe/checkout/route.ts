@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { stripe, PRICE_AMOUNTS } from "@/lib/stripe";
+import { getStripe, PRICE_AMOUNTS } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
         },
       ];
 
-  const checkoutSession = await stripe.checkout.sessions.create({
+  const checkoutSession = await getStripe().checkout.sessions.create({
     mode: isSubscription ? "subscription" : "payment",
     payment_method_types: ["card"],
     ...(isSubscription
