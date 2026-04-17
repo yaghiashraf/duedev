@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Clock,
+  Download,
   FileSearch,
   GitBranch,
   Loader2,
@@ -93,7 +94,7 @@ export default function PublicAuditForm() {
           <div className="min-w-0">
             <h2 className="break-words text-xl font-semibold text-white">Run a free public repo preview</h2>
             <p className="mt-1 text-sm leading-6 text-zinc-400">
-              Paste a GitHub URL and get an instant buyer-style risk snapshot before the full private audit.
+              Paste a GitHub URL and get a real static risk snapshot before the full private audit.
             </p>
           </div>
         </div>
@@ -141,6 +142,10 @@ export default function PublicAuditForm() {
             Buyer red flags
           </div>
         </div>
+        <Link href="/sample-report" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-200 transition hover:text-emerald-100">
+          View sample full report
+          <Download className="h-4 w-4" />
+        </Link>
       </div>
 
       <div className="card-border min-h-[360px] rounded-lg p-5 sm:p-6">

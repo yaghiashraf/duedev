@@ -42,7 +42,7 @@ Full private audits require these groups of variables:
 - GitHub OAuth: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
 - Public preview rate limit: optional `GITHUB_TOKEN`
 - AI: `ANTHROPIC_API_KEY`
-- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `STRIPE_*_PRICE_ID` values are optional because checkout can fall back to inline Stripe price data.
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `STRIPE_*_PRICE_ID` values are optional because checkout can fall back to inline Stripe price data. Test-mode prices have been created in Stripe: Seller `price_1TNEPCA3gGBV3QMFk28pWtjj`, Buyer `price_1TNEPCA3gGBV3QMFVKNSN4pK`, Monitor `price_1TNEPHA3gGBV3QMFHhmMgQIw`.
 
 If GitHub OAuth is not configured, the sign-in screen shows a clear setup state and links users back to the public preview instead of failing with a generic server error.
 

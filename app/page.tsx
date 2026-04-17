@@ -5,6 +5,7 @@ import {
   BookOpen,
   CheckCircle,
   Clock,
+  Download,
   GitBranch,
   Lock,
   Search,
@@ -49,8 +50,8 @@ const plans = [
   {
     name: "Public Preview",
     price: "$0",
-    body: "Early screening for public GitHub repositories.",
-    items: ["Static source scan", "Risk score", "Top findings", "Debt estimate"],
+    body: "A real static scan for public GitHub repositories.",
+    items: ["Live GitHub API scan", "Risk score", "Top findings", "Debt estimate"],
     href: "#free-audit",
     cta: "Try preview",
   },
@@ -221,9 +222,9 @@ export default function Home() {
       <section className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=80"
-          alt="Deal team reviewing technical diligence material"
-          className="absolute inset-0 h-full w-full object-cover opacity-22"
+          src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1800&q=80"
+          alt="Professional diligence workspace with financial documents and laptop"
+          className="absolute inset-0 h-full w-full object-cover opacity-24"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#080a09]/72 via-[#080a09]/88 to-[#080a09]" />
         <div className="relative mx-auto grid min-w-0 max-w-6xl gap-10 px-4 pb-14 pt-20 sm:pb-20 sm:pt-28 lg:grid-cols-[1fr_0.86fr] lg:items-center">
@@ -241,16 +242,23 @@ export default function Home() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="#free-audit"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-emerald-400 px-6 text-base font-semibold text-black transition hover:bg-emerald-300"
+                className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-emerald-400 px-6 text-base font-semibold text-black transition hover:bg-emerald-300"
               >
                 Run free preview
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 href="/dashboard"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/15 bg-black/20 px-6 text-base font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
+                className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-white/15 bg-black/20 px-6 text-base font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
               >
                 Audit private repo
+              </Link>
+              <Link
+                href="/sample-report"
+                className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-6 text-base font-semibold text-emerald-100 transition hover:border-emerald-300/45 hover:bg-emerald-300/15"
+              >
+                Sample report
+                <Download className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -279,9 +287,12 @@ export default function Home() {
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               Signals that change a deal conversation.
             </h2>
-            <p className="mt-4 text-base leading-7 text-zinc-400">
-              Each report turns repository evidence into practical diligence language for buyers, sellers, and operators.
-            </p>
+          <p className="mt-4 text-base leading-7 text-zinc-400">
+            Each report turns repository evidence into practical diligence language for buyers, sellers, and operators.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-zinc-500">
+            The free audit is real: it samples public GitHub files through the GitHub API and runs deterministic static checks. The paid audit adds authenticated private repo access, AI-assisted review, saved report history, and shareable seller links.
+          </p>
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -334,16 +345,16 @@ export default function Home() {
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-300">Pricing</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Straightforward diligence pricing.</h2>
           </div>
-          <p className="max-w-md text-sm leading-6 text-zinc-400">
+          <p className="max-w-md text-left text-sm leading-6 text-zinc-400 sm:text-right">
             Use the preview for quick screening. Use paid reports when money, trust, or closing conditions are on the line.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid items-stretch gap-4 md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-lg border p-6 ${
+              className={`flex h-full flex-col rounded-lg border p-6 ${
                 plan.featured
                   ? "border-emerald-300/40 bg-emerald-300/10"
                   : "border-white/10 bg-white/[0.03]"
@@ -357,7 +368,7 @@ export default function Home() {
               <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
               <div className="mt-3 text-4xl font-semibold text-white">{plan.price}</div>
               <p className="mt-3 min-h-12 text-sm leading-6 text-zinc-400">{plan.body}</p>
-              <ul className="mt-6 space-y-3">
+              <ul className="mt-6 space-y-3 pb-8">
                 {plan.items.map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-zinc-300">
                     <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
@@ -367,7 +378,7 @@ export default function Home() {
               </ul>
               <Link
                 href={plan.href}
-                className={`mt-8 inline-flex w-full min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold transition ${
+                className={`mt-auto inline-flex w-full min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold transition ${
                   plan.featured
                     ? "bg-emerald-400 text-black hover:bg-emerald-300"
                     : "border border-white/15 text-white hover:border-white/30 hover:bg-white/10"
@@ -377,6 +388,12 @@ export default function Home() {
               </Link>
             </div>
           ))}
+        </div>
+        <div className="mt-5 flex justify-center">
+          <Link href="/sample-report" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200 transition hover:text-emerald-100">
+            View and download a full sample report
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 
@@ -447,14 +464,42 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 px-4 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-zinc-500 sm:flex-row">
-          <LogoLockup markClassName="h-8 w-8" textClassName="font-semibold text-zinc-200" />
-          <div className="flex items-center gap-2">
-            <Lock className="h-3.5 w-3.5" />
-            Source code is analyzed only for report generation.
+      <footer className="border-t border-white/10 px-4 py-10">
+        <div className="mx-auto grid max-w-6xl gap-8 text-sm text-zinc-500 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+          <div>
+            <LogoLockup markClassName="h-8 w-8" textClassName="font-semibold text-zinc-200" />
+            <p className="mt-4 max-w-sm leading-6">
+              Technical due diligence for small SaaS acquisitions. Preview public repos, audit private repos, and share seller-ready proof.
+            </p>
+            <div className="mt-4 flex items-center gap-2">
+              <Lock className="h-3.5 w-3.5" />
+              Source code is analyzed only for report generation.
+            </div>
           </div>
-          <p>© 2026 DueDev</p>
+          <div>
+            <h3 className="font-semibold text-white">Product</h3>
+            <div className="mt-3 grid gap-2">
+              <Link href="#free-audit" className="transition hover:text-white">Free preview</Link>
+              <Link href="/sample-report" className="transition hover:text-white">Sample report</Link>
+              <Link href="/dashboard" className="transition hover:text-white">Private audit</Link>
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">Trust</h3>
+            <div className="mt-3 grid gap-2">
+              <Link href="/security" className="transition hover:text-white">Security</Link>
+              <Link href="/privacy" className="transition hover:text-white">Privacy Policy</Link>
+              <Link href="/terms" className="transition hover:text-white">Terms of Service</Link>
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">Company</h3>
+            <div className="mt-3 grid gap-2">
+              <Link href="/refund" className="transition hover:text-white">Refund Policy</Link>
+              <a href="mailto:hello@duedev.app" className="transition hover:text-white">Contact</a>
+              <p>© 2026 DueDev</p>
+            </div>
+          </div>
         </div>
       </footer>
     </main>
