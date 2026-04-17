@@ -2,16 +2,13 @@ import { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
+import { getPrivateAuditConfigurationStatus } from "./runtime-config";
 
 const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
 const configuredAuthSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
-const isPrivateAuthConfigured = Boolean(
-  githubClientId &&
-  githubClientSecret &&
-  configuredAuthSecret &&
-  process.env.DATABASE_URL
-);
+const privateAuditConfig = getPrivateAuditConfigurationStatus();
+const isPrivateAuthConfigured = privateAuditConfig.ready;
 const authSecret =
   configuredAuthSecret ??
   (!isPrivateAuthConfigured ? "duedev-auth-disabled" : undefined);
@@ -46,19 +43,7 @@ export const authOptions: NextAuthOptions = {
 };
 
 export function getAuthConfigurationStatus() {
-  const missing = [
-    ["GITHUB_CLIENT_ID", githubClientId],
-    ["GITHUB_CLIENT_SECRET", githubClientSecret],
-    ["NEXTAUTH_SECRET", process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET],
-    ["DATABASE_URL", process.env.DATABASE_URL],
-  ]
-    .filter(([, value]) => !value)
-    .map(([name]) => name);
-
-  return {
-    ready: missing.length === 0,
-    missing,
-  };
+  return privateAuditConfig;
 }
 
 declare module "next-auth" {

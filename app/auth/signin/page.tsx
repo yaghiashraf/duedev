@@ -3,35 +3,19 @@
 import { useEffect, useState } from "react";
 import { getProviders, signIn } from "next-auth/react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, GitBranch, Loader2, Lock } from "lucide-react";
+import { AlertTriangle, ArrowRight, Download, GitBranch, Loader2, Lock } from "lucide-react";
 import { LogoLockup } from "@/app/brand";
-
-interface ConfigStatus {
-  privateAudits?: {
-    ready: boolean;
-    missing: string[];
-  };
-}
 
 export default function SignInPage() {
   const [githubReady, setGithubReady] = useState(false);
-  const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      getProviders().catch(() => null),
-      fetch("/api/config/status").then((res) => res.json()).catch(() => null),
-    ])
-      .then(([providers, config]) => {
-        setGithubReady(Boolean(providers?.github));
-        setConfigStatus(config);
-      })
+    getProviders()
+      .then((providers) => setGithubReady(Boolean(providers?.github)))
       .catch(() => setGithubReady(false))
       .finally(() => setLoading(false));
   }, []);
-
-  const missingPrivateAuditConfig = configStatus?.privateAudits?.missing ?? [];
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#080a09] px-4 text-white">
@@ -66,33 +50,28 @@ export default function SignInPage() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-orange-200" />
                 <div>
-                  <p className="font-semibold text-white">GitHub sign-in is not configured on this deployment.</p>
+                  <p className="font-semibold text-white">Private audits are not accepting checkout yet.</p>
                   <p className="mt-1 text-sm leading-6 text-zinc-300">
-                    Purchase buttons for private audits stop here until the hosted app has GitHub OAuth, database, and auth secrets in Vercel.
+                    The public preview and sample report are available now. Private repository checkout will open once secure GitHub authorization and billing are enabled.
                   </p>
-                  {missingPrivateAuditConfig.length > 0 && (
-                    <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-100">
-                        Missing environment variables
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {missingPrivateAuditConfig.map((name) => (
-                          <span key={name} className="rounded-md bg-white/10 px-2 py-1 text-xs text-zinc-200">
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
-              <Link
-                href="/#free-audit"
-                className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200"
-              >
-                Run public preview
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/#free-audit"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200"
+                >
+                  Run public preview
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/sample-report"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
+                >
+                  Sample report
+                  <Download className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           )}
 

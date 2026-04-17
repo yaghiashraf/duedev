@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { LogoLockup, LogoMark } from "./brand";
 import PublicAuditForm from "./public-audit-form";
+import { getRuntimeConfigStatus } from "@/lib/runtime-config";
+
+export const dynamic = "force-dynamic";
 
 const trustPoints = [
   "Public repo preview in seconds",
@@ -188,6 +191,18 @@ function HeroReportAnimation() {
 }
 
 export default function Home() {
+  const paidAuditsReady = getRuntimeConfigStatus().paidAudits.ready;
+  const paidAuditHref = paidAuditsReady ? "/dashboard" : "/sample-report";
+  const paidAuditLabel = paidAuditsReady ? "Full audit" : "Sample report";
+  const visiblePlans = plans.map((plan) => {
+    if (plan.name === "Public Preview") return plan;
+    return {
+      ...plan,
+      href: paidAuditHref,
+      cta: paidAuditsReady ? plan.cta : "View sample first",
+    };
+  });
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#080a09] text-white">
       <nav className="sticky top-0 z-20 border-b border-white/10 bg-[#080a09]/88 px-4 py-4 backdrop-blur">
@@ -211,10 +226,10 @@ export default function Home() {
             </Link>
           </div>
           <Link
-            href="/dashboard"
+            href={paidAuditHref}
             className="hidden min-h-10 items-center justify-center rounded-lg bg-emerald-400 px-4 text-sm font-semibold text-black transition hover:bg-emerald-300 sm:inline-flex"
           >
-            Full audit
+            {paidAuditLabel}
           </Link>
         </div>
       </nav>
@@ -248,10 +263,10 @@ export default function Home() {
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
-                href="/dashboard"
+                href={paidAuditHref}
                 className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-white/15 bg-black/20 px-6 text-base font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
               >
-                Audit private repo
+                {paidAuditsReady ? "Audit private repo" : "View sample report"}
               </Link>
               <Link
                 href="/sample-report"
@@ -322,8 +337,20 @@ export default function Home() {
         <div className="grid gap-3">
           {[
             ["01", "Paste a public repo", "Get an immediate snapshot for early screening."],
-            ["02", "Connect GitHub", "Select a private repo from your authenticated account."],
-            ["03", "Run the paid audit", "Stripe Checkout unlocks the deeper report workflow."],
+            [
+              "02",
+              paidAuditsReady ? "Connect GitHub" : "Review the sample",
+              paidAuditsReady
+                ? "Select a private repo from your authenticated account."
+                : "See the full report structure before private checkout opens.",
+            ],
+            [
+              "03",
+              paidAuditsReady ? "Run the paid audit" : "Prepare the private audit",
+              paidAuditsReady
+                ? "Stripe Checkout unlocks the deeper report workflow."
+                : "Use the preview findings to decide whether the repository needs deeper diligence.",
+            ],
             ["04", "Share or negotiate", "Use findings, cost estimates, and report links in the deal room."],
           ].map(([step, title, body]) => (
             <div key={step} className="professional-card flex gap-4 rounded-lg p-4">
@@ -351,7 +378,7 @@ export default function Home() {
         </div>
 
         <div className="grid items-stretch gap-4 md:grid-cols-3">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <div
               key={plan.name}
               className={`flex h-full flex-col rounded-lg border p-6 ${
@@ -389,6 +416,11 @@ export default function Home() {
             </div>
           ))}
         </div>
+        {!paidAuditsReady && (
+          <div className="mt-5 rounded-lg border border-orange-300/20 bg-orange-300/10 p-4 text-sm leading-6 text-orange-50">
+            Private checkout is not open on this deployment yet, so paid buttons route to the sample report instead of a broken sign-in flow.
+          </div>
+        )}
         <div className="mt-5 flex justify-center">
           <Link href="/sample-report" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-200 transition hover:text-emerald-100">
             View and download a full sample report
@@ -481,7 +513,7 @@ export default function Home() {
             <div className="mt-3 grid gap-2">
               <Link href="#free-audit" className="transition hover:text-white">Free preview</Link>
               <Link href="/sample-report" className="transition hover:text-white">Sample report</Link>
-              <Link href="/dashboard" className="transition hover:text-white">Private audit</Link>
+              <Link href={paidAuditHref} className="transition hover:text-white">Private audit</Link>
             </div>
           </div>
           <div>
