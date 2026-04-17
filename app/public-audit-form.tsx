@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -13,12 +13,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { DemoAuditReport } from "@/lib/demo-audit";
-
-interface ConfigStatus {
-  paidAudits?: {
-    ready: boolean;
-  };
-}
 
 const severityStyles = {
   critical: "border-red-500/25 bg-red-500/10 text-red-200",
@@ -61,16 +55,15 @@ export default function PublicAuditForm() {
   const [report, setReport] = useState<DemoAuditReport | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [paidAuditsReady, setPaidAuditsReady] = useState(false);
 
   const topFindings = useMemo(() => report?.findings.slice(0, 4) ?? [], [report]);
-
-  useEffect(() => {
-    fetch("/api/config/status")
-      .then((response) => response.json())
-      .then((status: ConfigStatus) => setPaidAuditsReady(Boolean(status.paidAudits?.ready)))
-      .catch(() => setPaidAuditsReady(false));
-  }, []);
+  const checkoutHref = useMemo(() => {
+    const params = new URLSearchParams({
+      plan: "BUYER",
+      repoUrl: report?.repo.url ?? repoUrl,
+    });
+    return `/checkout?${params.toString()}`;
+  }, [report?.repo.url, repoUrl]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -239,21 +232,17 @@ export default function PublicAuditForm() {
 
             <div className="mt-5 flex flex-col gap-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="font-semibold text-white">
-                  {paidAuditsReady ? "Need private repo coverage?" : "Want to see the full report format?"}
-                </p>
+                <p className="font-semibold text-white">Need the full audit report?</p>
                 <p className="mt-1 text-sm text-zinc-300">
-                  {paidAuditsReady
-                    ? "Run the full audit with GitHub OAuth, billing flow, and shareable report history."
-                    : "Private checkout is not open yet. Review the professional report format before running a paid audit."}
+                  Continue to the themed checkout flow for private repository access, Stripe payment, and shareable report history.
                 </p>
               </div>
               <Link
-                href={paidAuditsReady ? "/dashboard" : "/sample-report"}
+                href={checkoutHref}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-zinc-200"
               >
-                {paidAuditsReady ? "Full audit" : "View sample report"}
-                {paidAuditsReady ? <ArrowRight className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                Proceed to full audit
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>

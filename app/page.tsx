@@ -192,14 +192,15 @@ function HeroReportAnimation() {
 
 export default function Home() {
   const paidAuditsReady = getRuntimeConfigStatus().paidAudits.ready;
-  const paidAuditHref = paidAuditsReady ? "/dashboard" : "/sample-report";
-  const paidAuditLabel = paidAuditsReady ? "Full audit" : "Sample report";
+  const paidAuditHref = "/checkout?plan=BUYER";
+  const paidAuditLabel = paidAuditsReady ? "Full audit" : "Checkout";
   const visiblePlans = plans.map((plan) => {
     if (plan.name === "Public Preview") return plan;
+    const planType = plan.name === "Seller Report" ? "SELLER" : "BUYER";
     return {
       ...plan,
-      href: paidAuditHref,
-      cta: paidAuditsReady ? plan.cta : "View sample first",
+      href: `/checkout?plan=${planType}`,
+      cta: paidAuditsReady ? plan.cta : "Proceed to checkout",
     };
   });
 
@@ -266,7 +267,7 @@ export default function Home() {
                 href={paidAuditHref}
                 className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-white/15 bg-black/20 px-6 text-base font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
               >
-                {paidAuditsReady ? "Audit private repo" : "View sample report"}
+                {paidAuditsReady ? "Audit private repo" : "Proceed to checkout"}
               </Link>
               <Link
                 href="/sample-report"
@@ -418,7 +419,7 @@ export default function Home() {
         </div>
         {!paidAuditsReady && (
           <div className="mt-5 rounded-lg border border-orange-300/20 bg-orange-300/10 p-4 text-sm leading-6 text-orange-50">
-            Private checkout is not open on this deployment yet, so paid buttons route to the sample report instead of a broken sign-in flow.
+            Private checkout is not open on this deployment yet, so paid buttons now route to a themed checkout page instead of a broken sign-in flow.
           </div>
         )}
         <div className="mt-5 flex justify-center">
