@@ -162,7 +162,7 @@ function RiskGauge({ score }: { score: number }) {
 }
 
 export default function AuditPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const params = useParams();
   const auditId = params.id as string;
@@ -189,7 +189,10 @@ export default function AuditPage() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetchAudit();
+    const timeout = window.setTimeout(() => {
+      void fetchAudit();
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [status, fetchAudit]);
 
   // Poll while running

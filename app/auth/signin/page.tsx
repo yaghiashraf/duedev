@@ -1,48 +1,76 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { Shield, GitBranch, Lock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getProviders, signIn } from "next-auth/react";
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, GitBranch, Loader2, Lock, Shield } from "lucide-react";
 
 export default function SignInPage() {
+  const [githubReady, setGithubReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getProviders()
+      .then((providers) => setGithubReady(Boolean(providers?.github)))
+      .catch(() => setGithubReady(false))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#09090f] flex items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-[#080a09] px-4 text-white">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-10">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-indigo-400" />
+        <Link href="/" className="mb-10 flex items-center justify-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-300">
+            <Shield className="h-5 w-5" />
           </div>
-          <span className="text-xl font-semibold text-white">DueDev</span>
-        </div>
+          <span className="text-xl font-semibold">DueDev</span>
+        </Link>
 
-        {/* Card */}
-        <div className="card-border rounded-2xl p-8">
-          <h1 className="text-2xl font-bold text-white text-center mb-2">
-            Sign in to DueDev
-          </h1>
-          <p className="text-gray-400 text-center text-sm mb-8">
-            Connect GitHub to start auditing repositories
+        <div className="card-border rounded-lg p-8">
+          <h1 className="text-center text-2xl font-semibold tracking-tight text-white">Audit a private repository</h1>
+          <p className="mt-2 text-center text-sm leading-6 text-zinc-400">
+            Connect GitHub to select private repos, run checkout, and keep report history.
           </p>
 
-          <button
-            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-            className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 font-semibold py-3.5 px-6 rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            <GitBranch className="w-5 h-5" />
-            Continue with GitHub
-          </button>
+          {loading ? (
+            <div className="mt-8 flex min-h-12 items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-emerald-300" />
+            </div>
+          ) : githubReady ? (
+            <button
+              onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+              className="mt-8 flex min-h-12 w-full items-center justify-center gap-3 rounded-lg bg-white px-6 font-semibold text-black transition hover:bg-zinc-200"
+            >
+              <GitBranch className="h-5 w-5" />
+              Continue with GitHub
+            </button>
+          ) : (
+            <div className="mt-8 rounded-lg border border-orange-300/25 bg-orange-300/10 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-orange-200" />
+                <div>
+                  <p className="font-semibold text-white">Private audits are not configured yet.</p>
+                  <p className="mt-1 text-sm leading-6 text-zinc-300">
+                    The public preview still works. Add GitHub OAuth, database, and NextAuth secrets to enable private audits.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/#free-audit"
+                className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200"
+              >
+                Run public preview
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
 
-          <p className="mt-6 text-xs text-gray-500 text-center leading-relaxed">
-            We request read access to your repositories to perform the audit.
-            We never store your source code.
-          </p>
-
-          <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-center gap-2 text-xs text-gray-600">
-            <Lock className="w-3 h-3" />
-            OAuth 2.0 · Read-only repo access
+          <div className="mt-6 flex items-center justify-center gap-2 border-t border-white/10 pt-6 text-xs text-zinc-500">
+            <Lock className="h-3.5 w-3.5" />
+            OAuth access is used only to read repositories for selected audits.
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

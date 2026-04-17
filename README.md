@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DueDev
 
-## Getting Started
+Technical due diligence for micro-SaaS acquisitions.
 
-First, run the development server:
+DueDev now has two useful paths:
+
+- Public preview audit: anyone can paste a public GitHub repo and get a deterministic risk snapshot without signing in.
+- Full private audit: signed-in users connect GitHub, pick a repo, pay through Stripe, and receive a stored report.
+
+## Stack
+
+- Next.js 16 App Router
+- React 19
+- Tailwind CSS 4
+- NextAuth with GitHub OAuth
+- Prisma 7 with Postgres
+- Stripe Checkout and webhooks
+- Anthropic API for full private report generation
+
+## Requirements
+
+Node.js `20.19.0` or newer is required by Next.js 16 and Prisma 7.
+
+## Setup
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+The public preview works without secrets because it only reads public GitHub repository files through the public GitHub API.
+
+## Environment
+
+Full private audits require these groups of variables:
+
+- App: `NEXT_PUBLIC_APP_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
+- Database: `DATABASE_URL`
+- GitHub OAuth: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+- AI: `ANTHROPIC_API_KEY`
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_*_PRICE_ID`
+
+If GitHub OAuth is not configured, the sign-in screen shows a clear setup state and links users back to the public preview instead of failing with a generic server error.
+
+## Product Flow
+
+1. Users paste a public repo into the preview audit on the homepage.
+2. The `/api/demo-audit` route samples public source files and returns a risk report.
+3. Users who need private coverage sign in with GitHub.
+4. The dashboard lists repos from GitHub OAuth.
+5. Checkout creates a pending audit and redirects to Stripe.
+6. Stripe webhook marks the audit paid and starts the private audit.
+7. The audit page polls until the report is complete.
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run lint
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

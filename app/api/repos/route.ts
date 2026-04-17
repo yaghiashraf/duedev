@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Octokit } from "@octokit/rest";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -21,11 +21,20 @@ export async function GET() {
   }
 
   const octokit = new Octokit({ auth: account.access_token });
-  const { data } = await octokit.repos.listForAuthenticatedUser({
+  const response = await octokit.repos.listForAuthenticatedUser({
     sort: "updated",
     per_page: 100,
     type: "owner",
-  });
+  }).catch(() => null);
+
+  if (!response) {
+    return NextResponse.json(
+      { error: "GitHub repositories could not be loaded. Reconnect GitHub and try again." },
+      { status: 502 }
+    );
+  }
+
+  const { data } = response;
 
   const repos = data.map((r) => ({
     id: r.id,

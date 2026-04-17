@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const checkoutRequirements = ["STRIPE_SECRET_KEY", "NEXT_PUBLIC_APP_URL"];
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -21,6 +23,18 @@ export async function POST(req: NextRequest) {
   const validTypes = ["SELLER", "BUYER", "MONITOR"];
   if (!validTypes.includes(auditType)) {
     return NextResponse.json({ error: "Invalid audit type" }, { status: 400 });
+  }
+
+  const missingConfig: string[] = checkoutRequirements.filter((key) => !process.env[key]);
+  if (auditType === "MONITOR" && !process.env.STRIPE_MONITOR_PRICE_ID) {
+    missingConfig.push("STRIPE_MONITOR_PRICE_ID");
+  }
+
+  if (missingConfig.length > 0) {
+    return NextResponse.json(
+      { error: `Checkout is not configured. Missing: ${missingConfig.join(", ")}` },
+      { status: 503 }
+    );
   }
 
   const repoUrl = `https://github.com/${repoOwner}/${repoName}`;

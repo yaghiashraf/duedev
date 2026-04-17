@@ -91,6 +91,8 @@ export default function DashboardPage() {
   const [selectedRepo, setSelectedRepo] = useState<Repo | null>(null);
   const [selectedAuditType, setSelectedAuditType] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState("");
+  const [repoError, setRepoError] = useState("");
   const [loadingRepos, setLoadingRepos] = useState(true);
   const [step, setStep] = useState<"repos" | "type">("repos");
 
@@ -102,8 +104,15 @@ export default function DashboardPage() {
     if (status !== "authenticated") return;
     fetch("/api/repos")
       .then((r) => r.json())
-      .then((d) => { setRepos(d.repos ?? []); setLoadingRepos(false); })
-      .catch(() => setLoadingRepos(false));
+      .then((d) => {
+        setRepos(d.repos ?? []);
+        setRepoError(d.error ?? "");
+        setLoadingRepos(false);
+      })
+      .catch(() => {
+        setRepoError("Could not load repositories. Check GitHub OAuth and database configuration.");
+        setLoadingRepos(false);
+      });
 
     fetch("/api/audits")
       .then((r) => r.json())
@@ -124,6 +133,7 @@ export default function DashboardPage() {
   const handleLaunch = async () => {
     if (!selectedRepo || !selectedAuditType) return;
     setLaunching(true);
+    setLaunchError("");
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -134,9 +144,11 @@ export default function DashboardPage() {
           auditType: selectedAuditType,
         }),
       });
-      const { url } = await res.json();
+      const { url, error } = await res.json();
+      if (!res.ok) throw new Error(error ?? "Could not start checkout.");
       if (url) window.location.href = url;
-    } catch {
+    } catch (error) {
+      setLaunchError(error instanceof Error ? error.message : "Could not start checkout.");
       setLaunching(false);
     }
   };
@@ -201,6 +213,14 @@ export default function DashboardPage() {
               {loadingRepos ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+                </div>
+              ) : repoError ? (
+                <div className="rounded-lg border border-orange-500/20 bg-orange-500/10 p-4 text-sm text-orange-100">
+                  <p className="font-medium text-white">Repository access is not ready.</p>
+                  <p className="mt-1 leading-6">{repoError}</p>
+                  <Link href="/#free-audit" className="mt-3 inline-flex text-emerald-300 hover:text-emerald-200">
+                    Run a public preview instead
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-1 max-h-96 overflow-y-auto pr-1">
@@ -293,6 +313,11 @@ export default function DashboardPage() {
                   <><Plus className="w-4 h-4" /> Start Audit</>
                 )}
               </button>
+              {launchError && (
+                <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">
+                  {launchError}
+                </p>
+              )}
             </div>
           )}
         </div>
