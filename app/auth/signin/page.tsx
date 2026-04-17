@@ -6,16 +6,32 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, GitBranch, Loader2, Lock } from "lucide-react";
 import { LogoLockup } from "@/app/brand";
 
+interface ConfigStatus {
+  privateAudits?: {
+    ready: boolean;
+    missing: string[];
+  };
+}
+
 export default function SignInPage() {
   const [githubReady, setGithubReady] = useState(false);
+  const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProviders()
-      .then((providers) => setGithubReady(Boolean(providers?.github)))
+    Promise.all([
+      getProviders().catch(() => null),
+      fetch("/api/config/status").then((res) => res.json()).catch(() => null),
+    ])
+      .then(([providers, config]) => {
+        setGithubReady(Boolean(providers?.github));
+        setConfigStatus(config);
+      })
       .catch(() => setGithubReady(false))
       .finally(() => setLoading(false));
   }, []);
+
+  const missingPrivateAuditConfig = configStatus?.privateAudits?.missing ?? [];
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#080a09] px-4 text-white">
@@ -50,10 +66,24 @@ export default function SignInPage() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-orange-200" />
                 <div>
-                  <p className="font-semibold text-white">Private audits are not configured yet.</p>
+                  <p className="font-semibold text-white">GitHub sign-in is not configured on this deployment.</p>
                   <p className="mt-1 text-sm leading-6 text-zinc-300">
-                    The public preview still works. Add GitHub OAuth, database, and NextAuth secrets to enable private audits.
+                    Purchase buttons for private audits stop here until the hosted app has GitHub OAuth, database, and auth secrets in Vercel.
                   </p>
+                  {missingPrivateAuditConfig.length > 0 && (
+                    <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-100">
+                        Missing environment variables
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {missingPrivateAuditConfig.map((name) => (
+                          <span key={name} className="rounded-md bg-white/10 px-2 py-1 text-xs text-zinc-200">
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <Link

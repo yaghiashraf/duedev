@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "DueDev — Technical Due Diligence for SaaS",
@@ -28,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.className} min-h-full flex flex-col bg-[#080a09] text-white antialiased`}>
+      <body className="min-h-full flex flex-col bg-[#080a09] text-white antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

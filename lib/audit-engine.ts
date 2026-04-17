@@ -7,6 +7,14 @@ function getAnthropicClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 }
 
+type AiProvider = "anthropic" | "groq";
+
+function getAiProvider(): AiProvider {
+  const configured = process.env.AI_PROVIDER?.toLowerCase();
+  if (configured === "groq" || configured === "anthropic") return configured;
+  return process.env.GROQ_API_KEY ? "groq" : "anthropic";
+}
+
 interface RepoFile {
   path: string;
   content: string;
@@ -264,7 +272,27 @@ async function runClaudeAnalysis(
     ...detectAuthIssues(files),
   ];
 
-  const prompt = `You are a senior software engineer and acquisition specialist performing a technical due diligence audit on a SaaS codebase called "${repoName}".
+  const prompt = buildAuditPrompt(repoName, auditType, staticFindings, filesSummary);
+
+  const response = await getAnthropicClient().messages.create({
+    model: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
+    max_tokens: 4096,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  const claudeReport = parseAuditReport(text);
+
+  return mergeStaticFindings(claudeReport, staticFindings);
+}
+
+function buildAuditPrompt(
+  repoName: string,
+  auditType: "SELLER" | "BUYER" | "MONITOR",
+  staticFindings: AuditFinding[],
+  filesSummary: string
+) {
+  return `You are a senior software engineer and acquisition specialist performing a technical due diligence audit on a SaaS codebase called "${repoName}".
 
 Audit type: ${auditType === "BUYER" ? "BUYER due diligence (for someone considering acquiring this product)" : "SELLER report (to prove codebase quality to potential buyers)"}
 
@@ -303,29 +331,87 @@ Respond ONLY with a valid JSON object matching this exact structure:
 }
 
 Be thorough, honest, and business-focused. Frame technical issues in terms of business risk and cost.`;
+}
 
-  const response = await getAnthropicClient().messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
+function parseAuditReport(text: string): AuditReport {
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Failed to parse Claude response");
+  if (!jsonMatch) throw new Error("Failed to parse AI audit response");
 
-  const claudeReport = JSON.parse(jsonMatch[0]) as AuditReport;
+  return JSON.parse(jsonMatch[0]) as AuditReport;
+}
 
-  // Merge static findings with Claude's findings
-  claudeReport.findings = [
+function mergeStaticFindings(report: AuditReport, staticFindings: AuditFinding[]): AuditReport {
+  report.findings = [
     ...staticFindings,
-    ...(claudeReport.findings || []),
+    ...(report.findings || []),
   ].sort((a, b) => {
     const order = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
     return order[a.severity] - order[b.severity];
   });
 
-  return claudeReport;
+  return report;
+}
+
+async function runGroqAnalysis(
+  files: RepoFile[],
+  auditType: "SELLER" | "BUYER" | "MONITOR",
+  repoName: string
+): Promise<AuditReport> {
+  const filesSummary = files
+    .slice(0, 40)
+    .map((f) => `### ${f.path}\n\`\`\`\n${f.content.slice(0, 3000)}\n\`\`\``)
+    .join("\n\n");
+
+  const staticFindings = [
+    ...detectHardcodedSecrets(files),
+    ...detectDependencyIssues(files),
+    ...detectAuthIssues(files),
+  ];
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "user",
+          content: buildAuditPrompt(repoName, auditType, staticFindings, filesSummary),
+        },
+      ],
+      max_completion_tokens: 4096,
+      temperature: 0.2,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Groq audit analysis failed: ${errorText.slice(0, 240)}`);
+  }
+
+  const payload = await response.json() as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const text = payload.choices?.[0]?.message?.content ?? "";
+  return mergeStaticFindings(parseAuditReport(text), staticFindings);
+}
+
+async function runAiAnalysis(
+  files: RepoFile[],
+  auditType: "SELLER" | "BUYER" | "MONITOR",
+  repoName: string
+): Promise<AuditReport> {
+  const provider = getAiProvider();
+  if (provider === "groq") {
+    if (!process.env.GROQ_API_KEY) throw new Error("GROQ_API_KEY is required for Groq audit analysis.");
+    return runGroqAnalysis(files, auditType, repoName);
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required for Anthropic audit analysis.");
+  return runClaudeAnalysis(files, auditType, repoName);
 }
 
 export async function runAudit(auditId: string, accessToken: string): Promise<void> {
@@ -345,7 +431,7 @@ export async function runAudit(auditId: string, accessToken: string): Promise<vo
       throw new Error("Could not fetch repository contents. Check repository access.");
     }
 
-    const report = await runClaudeAnalysis(
+    const report = await runAiAnalysis(
       files,
       audit.auditType as "SELLER" | "BUYER" | "MONITOR",
       audit.repoName

@@ -15,7 +15,7 @@ DueDev now has two useful paths:
 - NextAuth with GitHub OAuth
 - Prisma 7 with Postgres
 - Stripe Checkout and webhooks
-- Anthropic API for full private report generation
+- Groq or Anthropic API for full private report generation
 
 ## Requirements
 
@@ -41,10 +41,16 @@ Full private audits require these groups of variables:
 - Database: `DATABASE_URL`
 - GitHub OAuth: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
 - Public preview rate limit: optional `GITHUB_TOKEN`
-- AI: `ANTHROPIC_API_KEY`
+- AI: `AI_PROVIDER`, plus `GROQ_API_KEY`/`GROQ_MODEL` for Groq or `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` for Anthropic. If `AI_PROVIDER` is omitted, the app uses Groq when `GROQ_API_KEY` exists and otherwise falls back to Anthropic.
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `STRIPE_*_PRICE_ID` values are optional because checkout can fall back to inline Stripe price data. Test-mode prices have been created in Stripe: Seller `price_1TNEPCA3gGBV3QMFk28pWtjj`, Buyer `price_1TNEPCA3gGBV3QMFVKNSN4pK`, Monitor `price_1TNEPHA3gGBV3QMFHhmMgQIw`.
 
-If GitHub OAuth is not configured, the sign-in screen shows a clear setup state and links users back to the public preview instead of failing with a generic server error.
+For the hosted Vercel app, the GitHub OAuth callback URL must be:
+
+```text
+https://duedev.vercel.app/api/auth/callback/github
+```
+
+If GitHub OAuth is not configured, `/api/auth/providers` returns `{}` and the sign-in screen shows the missing setup variables instead of failing with a generic server error.
 
 ## Product Flow
 

@@ -5,16 +5,21 @@ import { prisma } from "./prisma";
 
 const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
-const isGithubAuthConfigured = Boolean(githubClientId && githubClientSecret);
+const configuredAuthSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+const isPrivateAuthConfigured = Boolean(
+  githubClientId &&
+  githubClientSecret &&
+  configuredAuthSecret &&
+  process.env.DATABASE_URL
+);
 const authSecret =
-  process.env.NEXTAUTH_SECRET ??
-  process.env.AUTH_SECRET ??
-  (!isGithubAuthConfigured ? "duedev-auth-disabled" : undefined);
+  configuredAuthSecret ??
+  (!isPrivateAuthConfigured ? "duedev-auth-disabled" : undefined);
 
 export const authOptions: NextAuthOptions = {
-  adapter: isGithubAuthConfigured ? PrismaAdapter(prisma) as NextAuthOptions["adapter"] : undefined,
+  adapter: isPrivateAuthConfigured ? PrismaAdapter(prisma) as NextAuthOptions["adapter"] : undefined,
   secret: authSecret,
-  providers: isGithubAuthConfigured
+  providers: isPrivateAuthConfigured
     ? [
         GithubProvider({
           clientId: githubClientId!,

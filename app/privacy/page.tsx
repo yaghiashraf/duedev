@@ -26,7 +26,7 @@ export default function PrivacyPage() {
         {
           heading: "Third-party processors",
           body: [
-            "DueDev uses GitHub for repository authorization, Stripe for checkout and payment processing, Vercel for hosting, a Postgres provider for application data, and Anthropic for private audit analysis.",
+            "DueDev uses GitHub for repository authorization, Stripe for checkout and payment processing, Vercel for hosting, a Postgres provider for application data, and a configured AI provider such as Groq or Anthropic for private audit analysis.",
             "Payment card details are handled by Stripe. DueDev does not store full card numbers.",
           ],
         },
