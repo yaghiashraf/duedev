@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { getProviders, signIn } from "next-auth/react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, GitBranch, Loader2, Lock, Shield } from "lucide-react";
+import { AlertTriangle, ArrowRight, GitBranch, Loader2, Lock } from "lucide-react";
+import { LogoLockup } from "@/app/brand";
 
 export default function SignInPage() {
   const [githubReady, setGithubReady] = useState(false);
@@ -19,12 +20,12 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#080a09] px-4 text-white">
       <div className="w-full max-w-md">
-        <Link href="/" className="mb-10 flex items-center justify-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-300">
-            <Shield className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-semibold">DueDev</span>
-        </Link>
+        <LogoLockup
+          className="mb-10 flex items-center justify-center gap-2"
+          markClassName="h-10 w-10"
+          textClassName="text-xl font-semibold text-white"
+          animated
+        />
 
         <div className="card-border rounded-lg p-8">
           <h1 className="text-center text-2xl font-semibold tracking-tight text-white">Audit a private repository</h1>

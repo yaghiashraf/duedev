@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripe, PRICE_AMOUNTS } from "@/lib/stripe";
+import { getConfiguredPriceId, getStripe, PRICE_AMOUNTS, type CheckoutAuditType } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -20,16 +20,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const validTypes = ["SELLER", "BUYER", "MONITOR"];
+  const validTypes: CheckoutAuditType[] = ["SELLER", "BUYER", "MONITOR"];
   if (!validTypes.includes(auditType)) {
     return NextResponse.json({ error: "Invalid audit type" }, { status: 400 });
   }
+  const selectedAuditType = auditType as CheckoutAuditType;
 
   const missingConfig: string[] = checkoutRequirements.filter((key) => !process.env[key]);
-  if (auditType === "MONITOR" && !process.env.STRIPE_MONITOR_PRICE_ID) {
-    missingConfig.push("STRIPE_MONITOR_PRICE_ID");
-  }
-
   if (missingConfig.length > 0) {
     return NextResponse.json(
       { error: `Checkout is not configured. Missing: ${missingConfig.join(", ")}` },
@@ -46,55 +43,79 @@ export async function POST(req: NextRequest) {
       repoOwner,
       repoName,
       repoUrl,
-      auditType,
+      auditType: selectedAuditType,
       status: "PENDING",
     },
   });
 
-  const isSubscription = auditType === "MONITOR";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const isSubscription = selectedAuditType === "MONITOR";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL!.replace(/\/$/, "");
+  const configuredPriceId = getConfiguredPriceId(selectedAuditType);
 
-  const lineItems = isSubscription
-    ? undefined
+  const productName =
+    selectedAuditType === "SELLER" ? "DueDev Seller Report" :
+    selectedAuditType === "BUYER" ? "DueDev Buyer Due Diligence" :
+    "DueDev Continuous Monitor";
+
+  const lineItems = configuredPriceId
+    ? [{ price: configuredPriceId, quantity: 1 }]
     : [
         {
           price_data: {
             currency: "usd",
             product_data: {
-              name: auditType === "SELLER" ? "Seller Audit Report" : "Buyer Due Diligence Report",
+              name: productName,
               description:
-                auditType === "SELLER"
-                  ? `AI-powered technical audit of ${repoName} — shareable proof of code quality`
-                  : `Full acquisition risk assessment for ${repoName} with Risk Score and price adjustment recommendation`,
+                selectedAuditType === "SELLER"
+                  ? `Technical audit of ${repoName} with shareable code-quality proof`
+                  : `Acquisition risk assessment for ${repoName} with findings and price guidance`,
+              metadata: {
+                product: "duedev",
+                auditType: selectedAuditType,
+              },
             },
-            unit_amount: PRICE_AMOUNTS[auditType as "SELLER" | "BUYER"],
+            unit_amount: PRICE_AMOUNTS[selectedAuditType],
+            ...(isSubscription ? { recurring: { interval: "month" as const } } : {}),
           },
           quantity: 1,
         },
       ];
 
-  const checkoutSession = await getStripe().checkout.sessions.create({
-    mode: isSubscription ? "subscription" : "payment",
-    payment_method_types: ["card"],
-    ...(isSubscription
-      ? {
-          line_items: [
-            {
-              price: process.env.STRIPE_MONITOR_PRICE_ID!,
-              quantity: 1,
-            },
-          ],
-        }
-      : { line_items: lineItems }),
-    success_url: `${appUrl}/audit/${audit.id}?success=1`,
-    cancel_url: `${appUrl}/dashboard?canceled=1`,
-    metadata: {
-      auditId: audit.id,
-      userId: session.user.id,
-      auditType,
-    },
-    customer_email: session.user.email ?? undefined,
-  });
+  let checkoutSession;
+  try {
+    checkoutSession = await getStripe().checkout.sessions.create({
+      mode: isSubscription ? "subscription" : "payment",
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      success_url: `${appUrl}/audit/${audit.id}?success=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/dashboard?canceled=1`,
+      metadata: {
+        auditId: audit.id,
+        userId: session.user.id,
+        auditType: selectedAuditType,
+        repoOwner,
+        repoName,
+      },
+      client_reference_id: audit.id,
+      customer_email: session.user.email ?? undefined,
+      allow_promotion_codes: true,
+    });
+  } catch (error) {
+    await prisma.audit.update({
+      where: { id: audit.id },
+      data: {
+        status: "FAILED",
+        reportData: {
+          error: error instanceof Error ? error.message : "Stripe checkout creation failed",
+        },
+      },
+    });
+
+    return NextResponse.json(
+      { error: "Stripe checkout could not be created. Check Stripe keys and price configuration." },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ url: checkoutSession.url });
 }

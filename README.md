@@ -40,8 +40,9 @@ Full private audits require these groups of variables:
 - App: `NEXT_PUBLIC_APP_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - Database: `DATABASE_URL`
 - GitHub OAuth: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+- Public preview rate limit: optional `GITHUB_TOKEN`
 - AI: `ANTHROPIC_API_KEY`
-- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_*_PRICE_ID`
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `STRIPE_*_PRICE_ID` values are optional because checkout can fall back to inline Stripe price data.
 
 If GitHub OAuth is not configured, the sign-in screen shows a clear setup state and links users back to the public preview instead of failing with a generic server error.
 

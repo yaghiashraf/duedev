@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { Shield, CheckCircle, AlertTriangle, Clock, TrendingDown, DollarSign } from "lucide-react";
+import { CheckCircle, AlertTriangle, Clock, TrendingDown, DollarSign } from "lucide-react";
 import Link from "next/link";
+import { LogoLockup } from "@/app/brand";
 
 interface Finding {
   severity: "critical" | "high" | "medium" | "low" | "info";
@@ -81,12 +82,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
       {/* Header */}
       <div className="border-b border-white/5 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-indigo-400" />
-            </div>
-            <span className="font-semibold text-white">DueDev</span>
-          </Link>
+          <LogoLockup markClassName="h-8 w-8" textClassName="font-semibold text-white" />
           <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-full">
             <CheckCircle className="w-3.5 h-3.5" />
             Verified Seller Report

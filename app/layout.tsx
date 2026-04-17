@@ -14,6 +14,11 @@ export const metadata: Metadata = {
     description: "AI-powered code audits for SaaS acquisitions.",
     type: "website",
   },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -23,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.className} min-h-full flex flex-col bg-[#09090f] text-white antialiased`}>
+      <body className={`${inter.className} min-h-full flex flex-col bg-[#080a09] text-white antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

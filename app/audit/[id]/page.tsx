@@ -5,10 +5,11 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
-  Shield, AlertTriangle, CheckCircle, XCircle, Clock,
+  AlertTriangle, CheckCircle, XCircle, Clock,
   ChevronDown, ChevronUp, Share2, ArrowLeft, Loader2,
   TrendingDown, DollarSign, Zap, Lock, Copy
 } from "lucide-react";
+import { LogoLockup } from "@/app/brand";
 
 interface Finding {
   severity: "critical" | "high" | "medium" | "low" | "info";
@@ -242,12 +243,7 @@ export default function AuditPage() {
             <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-indigo-400" />
-              </div>
-              <span className="font-semibold text-white">DueDev</span>
-            </div>
+            <LogoLockup markClassName="h-8 w-8" textClassName="font-semibold text-white" />
           </div>
           {audit.status === "COMPLETE" && audit.shareToken && (
             <button

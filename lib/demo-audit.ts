@@ -120,11 +120,17 @@ function parseGitHubRepo(input: string) {
 }
 
 async function fetchGitHubJson<T>(path: string): Promise<T> {
+  const headers: HeadersInit = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "duedev-preview-audit",
+  };
+
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+
   const response = await fetch(`https://api.github.com${path}`, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "duedev-preview-audit",
-    },
+    headers,
     next: { revalidate: 60 },
   });
 
@@ -144,8 +150,13 @@ async function fetchGitHubJson<T>(path: string): Promise<T> {
 }
 
 async function fetchText(url: string) {
+  const headers: HeadersInit = { "User-Agent": "duedev-preview-audit" };
+  if (process.env.GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  }
+
   const response = await fetch(url, {
-    headers: { "User-Agent": "duedev-preview-audit" },
+    headers,
     next: { revalidate: 60 },
   });
   if (!response.ok) return "";
